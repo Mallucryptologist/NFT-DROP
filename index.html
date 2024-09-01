@@ -201,19 +201,62 @@
             </table>
         </div>
     </div>
-    <div class="group" style="position: fixed; right: 20px; top: 50%; transform: translateY(-50%); max-width: 250px; background-color: rgba(255, 255, 255, 0.9); padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
-        <h2 class="mb-3 text-2xl font-semibold">
+    <style>
+        .trading-group {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            max-width: 250px;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+        .trading-group:hover {
+            background-color: rgba(0, 0, 0, 0.9);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+        .trading-group h2 {
+            margin-bottom: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .trading-group p {
+            margin: 0;
+            max-width: 30ch;
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+        .trading-group .start-trading {
+            margin-top: 0.5rem;
+            background-color: #00ff00;
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .trading-group .start-trading:hover {
+            background-color: #00cc00;
+        }
+    </style>
+    <div class="trading-group">
+        <h2>
             Start Trading 📈
             <span class="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
                 -&gt;
             </span>
         </h2>
-        <p class="m-0 max-w-[30ch] text-balance text-sm opacity-50">
+        <p>
             Instantly start trading on Polynomial with a single click.
         </p>
-        <button class="start-trading mt-2" onclick="window.open('https://polynomial.fi/trade', '_blank')">Go to Polynomial</button>
+        <button class="start-trading" onclick="window.open('https://polynomial.fi/trade', '_blank')">Go to Polynomial</button>
     </div>
-<script>
+    <script>
     const initialPoints = 10000000; // 10 million
     const dailyIncrement = 1000000;
     const totalTokenSupply = 1000000000;  // 1 billion tokens
