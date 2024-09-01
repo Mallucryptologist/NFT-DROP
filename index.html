@@ -71,6 +71,42 @@
         .success { background-color: #d4edda; color: #155724; }
         .error { background-color: #f8d7da; color: #721c24; }
         .hidden { display: none; }
+        .popup {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .popup-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+            border-radius: 10px;
+        }
+
+        .popup-content h2 {
+            color: #001f3f;
+        }
+
+        .popup-content img {
+            max-width: 100%;
+            height: auto;
+            margin: 20px 0;
+        }
+
+        .popup-content p {
+            color: #001f3f;
+        }
     </style>
 </head>
 <body>
@@ -112,6 +148,14 @@
         <div id="notification"></div>
     </div>
 
+    <div id="sending-popup" class="popup">
+        <div class="popup-content">
+            <h2>Sending NFTs</h2>
+            <img src="https://media.tenor.com/9Rz3qqhLXVwAAAAC/pepe-the-frog-pepe.gif" alt="Pepe sending love">
+            <p>Please wait while we process your NFT drop...</p>
+        </div>
+    </div>
+
     <script src="https://cdn.ethers.io/lib/ethers-5.0.umd.min.js"></script>
     <script>
         const fileInput = document.getElementById('csv-file');
@@ -129,6 +173,7 @@
         const singleInput = document.getElementById('single-input');
         const loader = document.getElementById('loader');
         const notification = document.getElementById('notification');
+        const sendingPopup = document.getElementById('sending-popup');
 
         let walletAddress = null;
         let nftContractAddress = null;
@@ -248,11 +293,13 @@
         function showLoader() {
             loader.style.display = 'block';
             uploadButton.disabled = true;
+            sendingPopup.style.display = 'block';
         }
 
         function hideLoader() {
             loader.style.display = 'none';
             uploadButton.disabled = false;
+            sendingPopup.style.display = 'none';
         }
 
         function showNotification(message, isError = false) {
@@ -266,6 +313,7 @@
 
         uploadButton.addEventListener('click', async () => {
             if (walletAddress && nftContractAddress) {
+                showLoader();
                 const provider = new ethers.providers.Web3Provider(window.ethereum);
                 const signer = provider.getSigner();
                 const nftContract = new ethers.Contract(nftContractAddress, nftContractABI, signer);
