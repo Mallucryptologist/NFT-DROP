@@ -49,13 +49,20 @@
         <input type="file" id="csv-file" accept=".csv">
         <label for="csv-file" class="button">Choose CSV File</label>
         <div id="file-name"></div>
+        <button id="connect-wallet" class="button">Connect Wallet</button>
         <button id="upload-button" class="button" disabled>Upload and Drop NFTs</button>
     </div>
 
+    <script src="https://cdn.ethers.io/lib/ethers-5.0.umd.min.js"></script>
     <script>
         const fileInput = document.getElementById('csv-file');
         const fileName = document.getElementById('file-name');
         const uploadButton = document.getElementById('upload-button');
+        const connectWalletButton = document.getElementById('connect-wallet');
+
+        let walletAddress = null;
+        let nftContractAddress = null;
+        let nftContractABI = null;
 
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -68,14 +75,43 @@
             }
         });
 
+        connectWalletButton.addEventListener('click', async () => {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    const provider = new ethers.providers.Web3Provider(window.ethereum);
+                    const signer = provider.getSigner();
+                    walletAddress = await signer.getAddress();
+                    connectWalletButton.textContent = `Connected: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+                } catch (error) {
+                    console.error('Failed to connect wallet:', error);
+                }
+            } else {
+                alert('Please install MetaMask or another Ethereum wallet extension');
+            }
+        });
+
         uploadButton.addEventListener('click', () => {
             const file = fileInput.files[0];
-            if (file) {
+            if (file && walletAddress && nftContractAddress && nftContractABI) {
                 // Here you would implement the logic to read the CSV file
                 // and interact with the Optimism chain to drop the NFTs
                 alert('NFT drop initiated! (This is a placeholder - implement actual drop logic here)');
+            } else {
+                alert('Please connect your wallet, provide the NFT contract address and ABI, and select a CSV file before initiating the drop.');
             }
         });
+
+        // You need to add the NFT contract address and ABI here
+        function setNFTContractDetails(address, abi) {
+            nftContractAddress = address;
+            nftContractABI = abi;
+            console.log('NFT contract details set');
+        }
+
+        // Call this function with the actual contract address and ABI
+        // setNFTContractDetails('YOUR_CONTRACT_ADDRESS', YOUR_CONTRACT_ABI);
     </script>
 </body>
+</html>
 </html>
