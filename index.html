@@ -3,338 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polynomial Points Checker</title>
-   <style>
-    body {
-        margin: 0;
-        padding: 0;
-        background-color: #000;
-        color: #00FF00;
-        font-family: Arial, sans-serif;
-        overflow: hidden;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        flex-direction: column;
-        position: relative;
-    }
-    .wave {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg"><path fill="%2300FF00" fill-opacity="0.1" d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') repeat-x;
-        background-size: 1440px 320px;
-        animation: wave 10s linear infinite;
-        z-index: -1;
-    }
-    @keyframes wave {
-        0% {
-            background-position-x: 0;
-        }
-        100% {
-            background-position-x: 1440px;
-        }
-    }
-    input, button {
-        margin: 10px;
-        padding: 10px;
-        font-size: 16px;
-        background-color: #000;
-        color: #00FF00;
-        border: 1px solid #00FF00;
-        border-radius: 5px;
-        width: 200px;
-    }
-    button {
-        cursor: pointer;
-    }
-    .results {
-        margin-top: 20px;
-        text-align: left;
-        padding: 0 20px;
-    }
-    .results p {
-        margin: 5px 0;
-    }
-    .snowflake {
-        position: fixed;
-        top: -10px;
-        width: 12px;
-        height: 12px;
-        background-color: #FFF;
-        border-radius: 50%;
-        animation: fall 5s linear infinite;
-        opacity: 0.8;
-    }
-    @keyframes fall {
-        to {
-            transform: translateY(100vh);
-            opacity: 0;
-        }
-    }
-    .table-container {
-        position: relative;
-        padding: 3px;
-        background: #000;
-        background-clip: padding-box;
-        border: solid 5px transparent;
-        border-radius: 10px;
-    }
-    .table-container::before {
-        content: '';
-        position: absolute;
-        top: 0; right: 0; bottom: 0; left: 0;
-        z-index: -1;
-        margin: -5px;
-        border-radius: inherit;
-        background: linear-gradient(
-            45deg,
-            #00FF00, #00FFFF, #0000FF, #FF00FF, #FF0000, #FFFF00, #00FF00
-        );
-        background-size: 400% 400%;
-        animation: gradientMove 15s ease infinite;
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        background-color: #000;
-    }
-    th, td {
-        padding: 10px;
-        text-align: left;
-        border: 1px solid #00FF00;
-    }
-    th {
-        background-color: #000;
-    }
-    @keyframes gradientMove {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-    .supply-control {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-top: 10px;
-    }
-    .supply-control button {
-        width: 30px;
-        height: 30px;
-        font-size: 20px;
-        padding: 0;
-        margin: 0 10px;
-    }
-    #supplyPercentage {
-        font-size: 18px;
-    }
-    .start-trading {
-        margin-top: 20px;
-    }
-    .banner {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        padding: 10px;
-        text-align: center;
-        font-weight: bold;
-        color: #00FF00;
-        z-index: 1000;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .banner::after {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 100px;
-        height: 100px;
-        background-image: url('https://pbs.twimg.com/profile_images/1818793133745827840/SHQmVYts_400x400.jpg');
-        background-size: cover;
-        background-position: center;
-    }
-    .banner::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.75);
-        z-index: -1;
-    }
-</style>
-</head>
-<body>
-    <div class="banner">Built for intern to speculate</div>
-    <div class="wave"></div>
-    <h1>Polynomial Points Checker</h1>
-    <input type="number" id="userPoints" placeholder="Enter your points" value="10000">
-    <button onclick="calculateValues()">Check Value</button>
-    <p>% of token for trading:</p>
-    <div class="supply-control">
-        <button onclick="changeSupplyPercentage(-1)">-</button>
-        <span id="supplyPercentage">2.5%</span>
-        <button onclick="changeSupplyPercentage(1)">+</button>
-    </div>
-    <div class="results" id="results">
-        <p id="circulationPoints">Current Circulation Points: </p>
-        <p id="userPointsDisplay">Your Points: </p>
-        <div class="table-container">
-            <table id="valuationTable">
-                <thead>
-                    <tr>
-                        <th>Valuation</th>
-                        <th>Your Value</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Valuation rows will be inserted here -->
-                </tbody>
-            </table>
-        </div>
-    </div>
+    <title>NFT Drop - Optimism Chain</title>
     <style>
-        .trading-group {
-            position: fixed;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            max-width: 250px;
-            background-color: rgba(0, 0, 0, 0.8);
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #001f3f; /* Navy blue */
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-            color: #fff;
-            transition: all 0.3s ease;
+            background-color: rgba(255, 255, 255, 0.1);
         }
-        .trading-group:hover {
-            background-color: rgba(0, 0, 0, 0.9);
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        h1 {
+            margin-bottom: 20px;
         }
-        .trading-group h2 {
-            margin-bottom: 0.75rem;
-            font-size: 1.5rem;
-            font-weight: 600;
+        input[type="file"] {
+            display: none;
         }
-        .trading-group p {
-            margin: 0;
-            max-width: 30ch;
-            font-size: 0.875rem;
-            opacity: 0.8;
-        }
-        .trading-group .start-trading {
-            margin-top: 0.5rem;
-            background-color: #00ff00;
-            color: #000;
+        .button {
+            background-color: white;
+            color: #001f3f;
+            padding: 10px 20px;
             border: none;
-            padding: 8px 16px;
             border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            font-size: 16px;
+            margin: 10px;
         }
-        .trading-group .start-trading:hover {
-            background-color: #00cc00;
+        #file-name {
+            margin-top: 10px;
+            font-style: italic;
         }
     </style>
-    <div class="trading-group">
-        <h2>
-            Start Trading 📈
-            <span class="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-                -&gt;
-            </span>
-        </h2>
-        <p>
-            Instantly start trading on Polynomial with a single click.
-        </p>
-        <button class="start-trading" onclick="window.open('https://polynomial.fi/trade', '_blank')">Go to Polynomial</button>
+</head>
+<body>
+    <div class="container">
+        <h1>NFT Drop - Optimism Chain</h1>
+        <input type="file" id="csv-file" accept=".csv">
+        <label for="csv-file" class="button">Choose CSV File</label>
+        <div id="file-name"></div>
+        <button id="upload-button" class="button" disabled>Upload and Drop NFTs</button>
     </div>
+
     <script>
-    const initialPoints = 10000000; // 10 million
-    const dailyIncrement = 1000000;
-    const totalTokenSupply = 1000000000;  // 1 billion tokens
-    let supplyPercentage = 2.5;  // Initial percentage
-    let tokenSupplyForTradingPoints = (supplyPercentage / 100) * totalTokenSupply;
-    const valuations = [50000000, 75000000, 100000000, 250000000, 500000000, 1000000000, 2000000000];
-    const startTime = new Date().setUTCHours(14, 0, 0, 0); // Today at 2 PM UTC
+        const fileInput = document.getElementById('csv-file');
+        const fileName = document.getElementById('file-name');
+        const uploadButton = document.getElementById('upload-button');
 
-    function updateCurrentPoints() {
-        const now = new Date();
-        const today2PM = new Date(now).setUTCHours(14, 0, 0, 0);
-        const tomorrow2PM = new Date(today2PM + 24 * 60 * 60 * 1000);
-        
-        if (now < tomorrow2PM) {
-            return initialPoints; // Return 10 million until tomorrow at 2 PM UTC
-        } else {
-            const daysSinceStart = Math.floor((now - tomorrow2PM) / (24 * 60 * 60 * 1000)) + 1;
-            return initialPoints + (daysSinceStart * dailyIncrement);
-        }
-    }
-
-    function calculateValues() {
-        const userPointsInput = document.getElementById('userPoints');
-        const userPoints = userPointsInput.value ? parseInt(userPointsInput.value) : 0;
-        const currentTotalPoints = updateCurrentPoints();
-        
-        document.getElementById('userPointsDisplay').textContent = `Your Points: ${userPoints.toLocaleString()}`;
-        document.getElementById('circulationPoints').textContent = `Current Circulation Points: ${currentTotalPoints.toLocaleString()}`;
-
-        const tableBody = document.querySelector('#valuationTable tbody');
-        tableBody.innerHTML = ''; // Clear previous results
-
-        valuations.forEach(valuation => {
-            const userTokenAllocation = (userPoints / currentTotalPoints) * tokenSupplyForTradingPoints;
-            const dollarValue = (userTokenAllocation / totalTokenSupply) * valuation;
-
-            const row = tableBody.insertRow();
-            const valuationCell = row.insertCell(0);
-            const valueCell = row.insertCell(1);
-
-            valuationCell.textContent = valuation >= 1000000000 ? 
-                `$${(valuation / 1000000000).toFixed(1)}B` : 
-                `$${(valuation / 1000000).toFixed(0)}M`;
-            valueCell.textContent = `$${dollarValue.toFixed(2)}`;
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                fileName.textContent = `Selected file: ${file.name}`;
+                uploadButton.disabled = false;
+            } else {
+                fileName.textContent = '';
+                uploadButton.disabled = true;
+            }
         });
-    }
 
-    function changeSupplyPercentage(change) {
-        supplyPercentage = Math.max(0.1, Math.min(100, supplyPercentage + change));
-        tokenSupplyForTradingPoints = (supplyPercentage / 100) * totalTokenSupply;
-        document.getElementById('supplyPercentage').textContent = supplyPercentage.toFixed(1) + '%';
-        calculateValues();
-    }
-
-    function createSnowflakes(num) {
-        for (let i = 0; i < num; i++) {
-            const snowflake = document.createElement('div');
-            snowflake.className = 'snowflake';
-            snowflake.style.left = `${Math.random() * 100}vw`;
-            snowflake.style.animationDuration = `${Math.random() * 3 + 2}s`;
-            snowflake.style.animationDelay = `${Math.random() * 5}s`;
-            document.body.appendChild(snowflake);
-        }
-    }
-
-    function updateCirculatingPoints() {
-        const currentTotalPoints = updateCurrentPoints();
-        document.getElementById('circulationPoints').textContent = `Current Circulation Points: ${currentTotalPoints.toLocaleString()}`;
-    }
-
-    createSnowflakes(50);
-    updateCirculatingPoints(); // Update circulating points on load
-    setInterval(updateCirculatingPoints, 60000); // Update circulating points every minute
-
-    // Initialize with zero points
-    document.getElementById('userPoints').value = '';
-    document.getElementById('userPointsDisplay').textContent = 'Your Points: 0';
-    calculateValues();
-</script>
+        uploadButton.addEventListener('click', () => {
+            const file = fileInput.files[0];
+            if (file) {
+                // Here you would implement the logic to read the CSV file
+                // and interact with the Optimism chain to drop the NFTs
+                alert('NFT drop initiated! (This is a placeholder - implement actual drop logic here)');
+            }
+        });
+    </script>
 </body>
 </html>
