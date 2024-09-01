@@ -1,15 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- ... (previous head content remains the same) ... -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFT Drop - Multi-Chain</title>
     <style>
-        /* ... (previous styles remain the same) ... */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #001f3f;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .button {
+            background-color: white;
+            color: #001f3f;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        input[type="text"], input[type="number"], select {
+            padding: 8px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
         .loader {
             border: 5px solid #f3f3f3;
             border-top: 5px solid #3498db;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            width: 30px;
+            height: 30px;
             animation: spin 1s linear infinite;
             margin: 20px auto;
             display: none;
@@ -24,29 +68,182 @@
             border-radius: 5px;
             display: none;
         }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- ... (previous container content remains the same) ... -->
+        <h1>NFT Drop - Multi-Chain</h1>
+        <div class="input-group">
+            <select id="network-select">
+                <option value="ethereum">Ethereum</option>
+                <option value="optimism">Optimism</option>
+                <option value="base">Base</option>
+                <option value="arbitrum">Arbitrum</option>
+            </select>
+        </div>
+        <button id="connect-wallet" class="button">Connect Wallet</button>
+        <div class="input-group">
+            <input type="text" id="contract-address-input" placeholder="Enter NFT Contract Address">
+            <button id="set-contract" class="button">Set Contract</button>
+        </div>
+        <div id="contract-address"></div>
+        <div class="input-group">
+            <select id="input-type-select">
+                <option value="csv">CSV File</option>
+                <option value="single">Single Address</option>
+            </select>
+        </div>
+        <div id="csv-input" class="input-group">
+            <input type="file" id="csv-file" accept=".csv">
+            <label for="csv-file" class="button">Choose CSV File</label>
+            <div id="file-name"></div>
+        </div>
+        <div id="single-input" class="input-group hidden">
+            <input type="text" id="single-address-input" placeholder="Enter single address">
+        </div>
+        <div class="input-group">
+            <input type="number" id="nft-amount" placeholder="Number of NFTs to send" min="1" value="1">
+        </div>
+        <button id="upload-button" class="button" disabled>Drop NFTs</button>
         <div class="loader" id="loader"></div>
         <div id="notification"></div>
     </div>
 
     <script src="https://cdn.ethers.io/lib/ethers-5.0.umd.min.js"></script>
     <script>
-        // ... (previous script content up to uploadButton event listener remains the same) ...
-
+        const fileInput = document.getElementById('csv-file');
+        const fileName = document.getElementById('file-name');
+        const uploadButton = document.getElementById('upload-button');
+        const connectWalletButton = document.getElementById('connect-wallet');
+        const setContractButton = document.getElementById('set-contract');
+        const contractAddressInput = document.getElementById('contract-address-input');
+        const contractAddressDisplay = document.getElementById('contract-address');
+        const singleAddressInput = document.getElementById('single-address-input');
+        const nftAmountInput = document.getElementById('nft-amount');
+        const networkSelect = document.getElementById('network-select');
+        const inputTypeSelect = document.getElementById('input-type-select');
+        const csvInput = document.getElementById('csv-input');
+        const singleInput = document.getElementById('single-input');
         const loader = document.getElementById('loader');
         const notification = document.getElementById('notification');
+
+        let walletAddress = null;
+        let nftContractAddress = null;
+        let nftContractABI = [
+            "function safeTransferFrom(address from, address to, uint256 tokenId) external",
+            "function balanceOf(address owner) external view returns (uint256 balance)",
+            "function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256)"
+        ];
+
+        const networkConfigs = {
+            ethereum: {
+                chainId: '0x1',
+                rpcUrl: 'https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID'
+            },
+            optimism: {
+                chainId: '0xa',
+                rpcUrl: 'https://mainnet.optimism.io'
+            },
+            base: {
+                chainId: '0x2105',
+                rpcUrl: 'https://mainnet.base.org'
+            },
+            arbitrum: {
+                chainId: '0xa4b1',
+                rpcUrl: 'https://arb1.arbitrum.io/rpc'
+            }
+        };
+
+        async function switchNetwork(networkName) {
+            const network = networkConfigs[networkName];
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: network.chainId }],
+                });
+            } catch (switchError) {
+                if (switchError.code === 4902) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [
+                                {
+                                    chainId: network.chainId,
+                                    chainName: networkName,
+                                    rpcUrls: [network.rpcUrl],
+                                },
+                            ],
+                        });
+                    } catch (addError) {
+                        console.error('Failed to add network:', addError);
+                    }
+                }
+                console.error('Failed to switch network:', switchError);
+            }
+        }
+
+        networkSelect.addEventListener('change', async () => {
+            await switchNetwork(networkSelect.value);
+        });
+
+        inputTypeSelect.addEventListener('change', () => {
+            if (inputTypeSelect.value === 'csv') {
+                csvInput.classList.remove('hidden');
+                singleInput.classList.add('hidden');
+            } else {
+                csvInput.classList.add('hidden');
+                singleInput.classList.remove('hidden');
+            }
+            updateUploadButton();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                fileName.textContent = `Selected file: ${file.name}`;
+                updateUploadButton();
+            } else {
+                fileName.textContent = '';
+                updateUploadButton();
+            }
+        });
+
+        connectWalletButton.addEventListener('click', async () => {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    await switchNetwork(networkSelect.value);
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    const provider = new ethers.providers.Web3Provider(window.ethereum);
+                    const signer = provider.getSigner();
+                    walletAddress = await signer.getAddress();
+                    connectWalletButton.textContent = `Connected: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+                    updateUploadButton();
+                } catch (error) {
+                    console.error('Failed to connect wallet:', error);
+                }
+            } else {
+                alert('Please install MetaMask or another Ethereum wallet extension');
+            }
+        });
+
+        setContractButton.addEventListener('click', () => {
+            nftContractAddress = contractAddressInput.value.trim();
+            if (nftContractAddress) {
+                contractAddressDisplay.textContent = `Contract set: ${nftContractAddress.slice(0, 6)}...${nftContractAddress.slice(-4)}`;
+                updateUploadButton();
+            } else {
+                alert('Please enter a valid contract address');
+            }
+        });
+
+        function updateUploadButton() {
+            const isCSV = inputTypeSelect.value === 'csv';
+            uploadButton.disabled = !(walletAddress && nftContractAddress && 
+                ((isCSV && fileInput.files[0]) || (!isCSV && singleAddressInput.value.trim())));
+        }
 
         function showLoader() {
             loader.style.display = 'block';
@@ -99,8 +296,7 @@
                     }
                 }
 
-                if (fileInput.files[0]) {
-                    // Process CSV file
+                if (inputTypeSelect.value === 'csv' && fileInput.files[0]) {
                     const reader = new FileReader();
                     reader.onload = async (e) => {
                         const csv = e.target.result;
@@ -118,8 +314,7 @@
                         showNotification('NFT drop completed for all addresses in the CSV!');
                     };
                     reader.readAsText(fileInput.files[0]);
-                } else if (singleAddressInput.value.trim()) {
-                    // Process single address
+                } else if (inputTypeSelect.value === 'single' && singleAddressInput.value.trim()) {
                     const address = singleAddressInput.value.trim();
                     try {
                         await sendNFT(address, nftAmount);
@@ -134,7 +329,7 @@
             }
         });
 
-        // ... (rest of the code remains the same) ...
+        singleAddressInput.addEventListener('input', updateUploadButton);
     </script>
 </body>
 </html>
