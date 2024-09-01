@@ -107,6 +107,14 @@
         .popup-content p {
             color: #001f3f;
         }
+        #nft-balance {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        #result-image {
+            max-width: 200px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -146,12 +154,14 @@
         <button id="upload-button" class="button" disabled>Drop NFTs</button>
         <div class="loader" id="loader"></div>
         <div id="notification"></div>
+        <div id="nft-balance"></div>
+        <img id="result-image" style="display: none;">
     </div>
 
     <div id="sending-popup" class="popup">
         <div class="popup-content">
             <h2>Sending NFTs</h2>
-            <img src="https://media.tenor.com/9Rz3qqhLXVwAAAAC/pepe-the-frog-pepe.gif" alt="Pepe sending love">
+            <img src="https://i.kym-cdn.com/entries/icons/original/000/017/322/image.jpg" alt="Pepe sending love">
             <p>Please wait while we process your NFT drop...</p>
         </div>
     </div>
@@ -266,6 +276,7 @@
                     walletAddress = await signer.getAddress();
                     connectWalletButton.textContent = `Connected: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
                     updateUploadButton();
+                    updateNFTBalance();
                 } catch (error) {
                     console.error('Failed to connect wallet:', error);
                 }
@@ -279,6 +290,7 @@
             if (nftContractAddress) {
                 contractAddressDisplay.textContent = `Contract set: ${nftContractAddress.slice(0, 6)}...${nftContractAddress.slice(-4)}`;
                 updateUploadButton();
+                updateNFTBalance();
             } else {
                 alert('Please enter a valid contract address');
             }
@@ -311,6 +323,20 @@
             }, 5000);
         }
 
+        async function updateNFTBalance() {
+            if (walletAddress && nftContractAddress) {
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const nftContract = new ethers.Contract(nftContractAddress, nftContractABI, provider);
+                try {
+                    const balance = await nftContract.balanceOf(walletAddress);
+                    document.getElementById('nft-balance').textContent = `NFT Balance: ${balance.toString()}`;
+                } catch (error) {
+                    console.error('Error fetching NFT balance:', error);
+                    document.getElementById('nft-balance').textContent = 'Error fetching NFT balance';
+                }
+            }
+        }
+
         uploadButton.addEventListener('click', async () => {
             if (walletAddress && nftContractAddress) {
                 showLoader();
@@ -334,12 +360,17 @@
                             showNotification(`Transaction sent for NFT ${tokenId} to ${toAddress}. Waiting for confirmation...`);
                             await tx.wait();
                             showNotification(`NFT ${tokenId} transfer to ${toAddress} confirmed!`);
+                            document.getElementById('result-image').src = 'https://i.kym-cdn.com/entries/icons/original/000/017/322/image.jpg';
+                            document.getElementById('result-image').style.display = 'block';
                             console.log(`NFT ${tokenId} transferred to ${toAddress}`);
                         } catch (error) {
                             showNotification(`Failed to transfer NFT ${tokenId} to ${toAddress}: ${error.message}`, true);
+                            document.getElementById('result-image').textContent = '❌';
+                            document.getElementById('result-image').style.display = 'block';
                             throw error;
                         } finally {
                             hideLoader();
+                            updateNFTBalance();
                         }
                     }
                 }
