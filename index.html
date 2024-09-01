@@ -37,20 +37,31 @@
             font-size: 16px;
             margin: 10px;
         }
-        #file-name {
+        #file-name, #contract-address {
             margin-top: 10px;
             font-style: italic;
+        }
+        input[type="text"] {
+            padding: 5px;
+            margin: 10px 0;
+            width: 300px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>NFT Drop - Optimism Chain</h1>
+        <button id="connect-wallet" class="button">Connect Wallet</button>
+        <div>
+            <input type="text" id="contract-address-input" placeholder="Enter NFT Contract Address">
+            <button id="set-contract" class="button">Set Contract</button>
+        </div>
+        <div id="contract-address"></div>
         <input type="file" id="csv-file" accept=".csv">
         <label for="csv-file" class="button">Choose CSV File</label>
         <div id="file-name"></div>
-        <button id="connect-wallet" class="button">Connect Wallet</button>
-        <button id="upload-button" class="button" disabled>Upload and Drop NFTs</button>
+        <input type="text" id="single-address-input" placeholder="Enter single address">
+        <button id="upload-button" class="button" disabled>Drop NFTs</button>
     </div>
 
     <script src="https://cdn.ethers.io/lib/ethers-5.0.umd.min.js"></script>
@@ -59,19 +70,23 @@
         const fileName = document.getElementById('file-name');
         const uploadButton = document.getElementById('upload-button');
         const connectWalletButton = document.getElementById('connect-wallet');
+        const setContractButton = document.getElementById('set-contract');
+        const contractAddressInput = document.getElementById('contract-address-input');
+        const contractAddressDisplay = document.getElementById('contract-address');
+        const singleAddressInput = document.getElementById('single-address-input');
 
         let walletAddress = null;
         let nftContractAddress = null;
-        let nftContractABI = null;
+        let nftContractABI = null; // You'll need to define this
 
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 fileName.textContent = `Selected file: ${file.name}`;
-                uploadButton.disabled = false;
+                updateUploadButton();
             } else {
                 fileName.textContent = '';
-                uploadButton.disabled = true;
+                updateUploadButton();
             }
         });
 
@@ -83,6 +98,7 @@
                     const signer = provider.getSigner();
                     walletAddress = await signer.getAddress();
                     connectWalletButton.textContent = `Connected: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+                    updateUploadButton();
                 } catch (error) {
                     console.error('Failed to connect wallet:', error);
                 }
@@ -91,27 +107,67 @@
             }
         });
 
-        uploadButton.addEventListener('click', () => {
-            const file = fileInput.files[0];
-            if (file && walletAddress && nftContractAddress && nftContractABI) {
-                // Here you would implement the logic to read the CSV file
-                // and interact with the Optimism chain to drop the NFTs
-                alert('NFT drop initiated! (This is a placeholder - implement actual drop logic here)');
+        setContractButton.addEventListener('click', () => {
+            nftContractAddress = contractAddressInput.value.trim();
+            if (nftContractAddress) {
+                contractAddressDisplay.textContent = `Contract set: ${nftContractAddress.slice(0, 6)}...${nftContractAddress.slice(-4)}`;
+                updateUploadButton();
             } else {
-                alert('Please connect your wallet, provide the NFT contract address and ABI, and select a CSV file before initiating the drop.');
+                alert('Please enter a valid contract address');
             }
         });
 
-        // You need to add the NFT contract address and ABI here
-        function setNFTContractDetails(address, abi) {
-            nftContractAddress = address;
-            nftContractABI = abi;
-            console.log('NFT contract details set');
+        function updateUploadButton() {
+            uploadButton.disabled = !(walletAddress && nftContractAddress && (fileInput.files[0] || singleAddressInput.value.trim()));
         }
 
-        // Call this function with the actual contract address and ABI
-        // setNFTContractDetails('YOUR_CONTRACT_ADDRESS', YOUR_CONTRACT_ABI);
+        uploadButton.addEventListener('click', async () => {
+            if (walletAddress && nftContractAddress) {
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const signer = provider.getSigner();
+                const nftContract = new ethers.Contract(nftContractAddress, nftContractABI, signer);
+
+                if (fileInput.files[0]) {
+                    // Process CSV file
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const csv = e.target.result;
+                        const rows = csv.split('\n').map(row => row.trim());
+                        for (let address of rows) {
+                            if (address) {
+                                try {
+                                    // Replace 'transfer' with your actual contract function
+                                    const tx = await nftContract.transfer(address, 1); // Assuming tokenId 1 for simplicity
+                                    await tx.wait();
+                                    console.log(`NFT transferred to ${address}`);
+                                } catch (error) {
+                                    console.error(`Failed to transfer NFT to ${address}:`, error);
+                                }
+                            }
+                        }
+                        alert('NFT drop completed!');
+                    };
+                    reader.readAsText(fileInput.files[0]);
+                } else if (singleAddressInput.value.trim()) {
+                    // Process single address
+                    const address = singleAddressInput.value.trim();
+                    try {
+                        // Replace 'transfer' with your actual contract function
+                        const tx = await nftContract.transfer(address, 1); // Assuming tokenId 1 for simplicity
+                        await tx.wait();
+                        console.log(`NFT transferred to ${address}`);
+                        alert('NFT drop completed!');
+                    } catch (error) {
+                        console.error(`Failed to transfer NFT to ${address}:`, error);
+                        alert('Failed to transfer NFT. Check console for details.');
+                    }
+                }
+            } else {
+                alert('Please connect your wallet, set the NFT contract address, and either select a CSV file or enter a single address before initiating the drop.');
+            }
+        });
+
+        singleAddressInput.addEventListener('input', updateUploadButton);
     </script>
 </body>
-</html>
 </html>
