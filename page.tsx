@@ -1,85 +1,288 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import Image from "next/image";
-
-export default function Home() {
-  const [userPoints, setUserPoints] = useState<number>(0);
-  const [supplyPercentage, setSupplyPercentage] = useState<number>(2.5);
-  const [valuations, setValuations] = useState<number[]>([]);
-
-  const initialPoints = 10000000; // 10 million
-  const totalTokenSupply = 1000000000; // 1 billion tokens
-
-  useEffect(() => {
-    setValuations([50000000, 75000000, 100000000, 250000000, 500000000, 1000000000, 2000000000]);
-  }, []);
-
-  const calculateValues = () => {
-    const currentTotalPoints = initialPoints;
-    const tokenSupplyForTradingPoints = (supplyPercentage / 100) * totalTokenSupply;
-
-    return valuations.map(valuation => {
-      const userTokenAllocation = (userPoints / currentTotalPoints) * tokenSupplyForTradingPoints;
-      const dollarValue = (userTokenAllocation / totalTokenSupply) * valuation;
-      return {
-        valuation: valuation >= 1000000000 ? 
-          `$${(valuation / 1000000000).toFixed(1)}B` : 
-          `$${(valuation / 1000000).toFixed(0)}M`,
-        value: `$${dollarValue.toFixed(2)}`
-      };
-    });
-  };
-
-  const changeSupplyPercentage = (change: number) => {
-    setSupplyPercentage(prev => Math.max(0.1, Math.min(100, prev + change)));
-  };
-
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      {/* Existing content */}
-      {/* ... */}
-
-      {/* Polynomial Points Checker */}
-      <div className="w-full max-w-md mt-8 p-6 bg-white rounded-lg shadow-xl">
-        <h2 className="text-2xl font-bold mb-4">Polynomial Points Checker</h2>
-        <input
-          type="number"
-          value={userPoints}
-          onChange={(e) => setUserPoints(Number(e.target.value))}
-          placeholder="Enter your points"
-          className="w-full p-2 mb-4 border rounded"
-        />
-        <div className="flex items-center justify-between mb-4">
-          <span>% of token for trading:</span>
-          <div className="flex items-center">
-            <button onClick={() => changeSupplyPercentage(-1)} className="px-2 py-1 bg-gray-200 rounded">-</button>
-            <span className="mx-2">{supplyPercentage.toFixed(1)}%</span>
-            <button onClick={() => changeSupplyPercentage(1)} className="px-2 py-1 bg-gray-200 rounded">+</button>
-          </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polynomial Points Checker</title>
+   <style>
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: #000;
+        color: #00FF00;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        flex-direction: column;
+        position: relative;
+    }
+    .wave {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg"><path fill="%2300FF00" fill-opacity="0.1" d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') repeat-x;
+        background-size: 1440px 320px;
+        animation: wave 10s linear infinite;
+        z-index: -1;
+    }
+    @keyframes wave {
+        0% {
+            background-position-x: 0;
+        }
+        100% {
+            background-position-x: 1440px;
+        }
+    }
+    input, button {
+        margin: 10px;
+        padding: 10px;
+        font-size: 16px;
+        background-color: #000;
+        color: #00FF00;
+        border: 1px solid #00FF00;
+        border-radius: 5px;
+        width: 200px;
+    }
+    button {
+        cursor: pointer;
+    }
+    .results {
+        margin-top: 20px;
+        text-align: left;
+        padding: 0 20px;
+    }
+    .results p {
+        margin: 5px 0;
+    }
+    .snowflake {
+        position: fixed;
+        top: -10px;
+        width: 12px;
+        height: 12px;
+        background-color: #FFF;
+        border-radius: 50%;
+        animation: fall 5s linear infinite;
+        opacity: 0.8;
+    }
+    @keyframes fall {
+        to {
+            transform: translateY(100vh);
+            opacity: 0;
+        }
+    }
+    .table-container {
+        position: relative;
+        padding: 3px;
+        background: #000;
+        background-clip: padding-box;
+        border: solid 5px transparent;
+        border-radius: 10px;
+    }
+    .table-container::before {
+        content: '';
+        position: absolute;
+        top: 0; right: 0; bottom: 0; left: 0;
+        z-index: -1;
+        margin: -5px;
+        border-radius: inherit;
+        background: linear-gradient(
+            45deg,
+            #00FF00, #00FFFF, #0000FF, #FF00FF, #FF0000, #FFFF00, #00FF00
+        );
+        background-size: 400% 400%;
+        animation: gradientMove 15s ease infinite;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #000;
+    }
+    th, td {
+        padding: 10px;
+        text-align: left;
+        border: 1px solid #00FF00;
+    }
+    th {
+        background-color: #000;
+    }
+    @keyframes gradientMove {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    .supply-control {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 10px;
+    }
+    .supply-control button {
+        width: 30px;
+        height: 30px;
+        font-size: 20px;
+        padding: 0;
+        margin: 0 10px;
+    }
+    #supplyPercentage {
+        font-size: 18px;
+    }
+    .start-trading {
+        margin-top: 20px;
+    }
+    .banner {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 10px;
+        text-align: center;
+        font-weight: bold;
+        color: #00FF00;
+        z-index: 1000;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .banner::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100px;
+        height: 100px;
+        background-image: url('https://pbs.twimg.com/profile_images/1818793133745827840/SHQmVYts_400x400.jpg');
+        background-size: cover;
+        background-position: center;
+    }
+    .banner::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.75);
+        z-index: -1;
+    }
+</style>
+</head>
+<body>
+    <div class="banner">Built for intern to speculate</div>
+    <div class="wave"></div>
+    <h1>Polynomial Points Checker</h1>
+    <input type="number" id="userPoints" placeholder="Enter your points" value="10000">
+    <button onclick="calculateValues()">Check Value</button>
+    <p>% of token for trading:</p>
+    <div class="supply-control">
+        <button onclick="changeSupplyPercentage(-1)">-</button>
+        <span id="supplyPercentage">2.5%</span>
+        <button onclick="changeSupplyPercentage(1)">+</button>
+    </div>
+    <div class="results" id="results">
+        <p id="circulationPoints">Current Circulation Points: </p>
+        <p id="userPointsDisplay">Your Points: </p>
+        <div class="table-container">
+            <table id="valuationTable">
+                <thead>
+                    <tr>
+                        <th>Valuation</th>
+                        <th>Your Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Valuation rows will be inserted here -->
+                </tbody>
+            </table>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr>
-                <th className="text-left">Valuation</th>
-                <th className="text-left">Your Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {calculateValues().map((row, index) => (
-                <tr key={index}>
-                  <td>{row.valuation}</td>
-                  <td>{row.value}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+    </div>
+    <div class="group">
+        <h2 class="mb-3 text-2xl font-semibold">
+            Start Trading{" "}
+            <span class="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
+                -&gt;
+            </span>
+        </h2>
+        <p class="m-0 max-w-[30ch] text-balance text-sm opacity-50">
+            Instantly start trading on Polynomial with a single click.
+        </p>
+        <button class="start-trading mt-2" onclick="window.open('https://polynomial.fi/trade', '_blank')">Go to Polynomial</button>
+    </div>
+<script>
+    const initialPoints = 10000000; // 10 million
+    const dailyIncrement = 1000000;
+    const totalTokenSupply = 1000000000;  // 1 billion tokens
+    let supplyPercentage = 2.5;  // Initial percentage
+    let tokenSupplyForTradingPoints = (supplyPercentage / 100) * totalTokenSupply;
+    const valuations = [50000000, 75000000, 100000000, 250000000, 500000000, 1000000000, 2000000000];
+    const startTime = new Date().setUTCHours(14, 0, 0, 0); // Today at 2 PM UTC
 
-      {/* Existing content */}
-      {/* ... */}
-    </main>
-  );
-}
+    function updateCurrentPoints() {
+        return initialPoints; // Always return 10 million
+    }
+
+    function calculateValues() {
+        const userPointsInput = document.getElementById('userPoints');
+        const userPoints = userPointsInput.value ? parseInt(userPointsInput.value) : 0;
+        const currentTotalPoints = updateCurrentPoints();
+        
+        document.getElementById('userPointsDisplay').textContent = `Your Points: ${userPoints.toLocaleString()}`;
+        document.getElementById('circulationPoints').textContent = `Current Circulation Points: ${currentTotalPoints.toLocaleString()}`;
+
+        const tableBody = document.querySelector('#valuationTable tbody');
+        tableBody.innerHTML = ''; // Clear previous results
+
+        valuations.forEach(valuation => {
+            const userTokenAllocation = (userPoints / currentTotalPoints) * tokenSupplyForTradingPoints;
+            const dollarValue = (userTokenAllocation / totalTokenSupply) * valuation;
+
+            const row = tableBody.insertRow();
+            const valuationCell = row.insertCell(0);
+            const valueCell = row.insertCell(1);
+
+            valuationCell.textContent = valuation >= 1000000000 ? 
+                `$${(valuation / 1000000000).toFixed(1)}B` : 
+                `$${(valuation / 1000000).toFixed(0)}M`;
+            valueCell.textContent = `$${dollarValue.toFixed(2)}`;
+        });
+    }
+
+    function changeSupplyPercentage(change) {
+        supplyPercentage = Math.max(0.1, Math.min(100, supplyPercentage + change));
+        tokenSupplyForTradingPoints = (supplyPercentage / 100) * totalTokenSupply;
+        document.getElementById('supplyPercentage').textContent = supplyPercentage.toFixed(1) + '%';
+        calculateValues();
+    }
+
+    function createSnowflakes(num) {
+        for (let i = 0; i < num; i++) {
+            const snowflake = document.createElement('div');
+            snowflake.className = 'snowflake';
+            snowflake.style.left = `${Math.random() * 100}vw`;
+            snowflake.style.animationDuration = `${Math.random() * 3 + 2}s`;
+            snowflake.style.animationDelay = `${Math.random() * 5}s`;
+            document.body.appendChild(snowflake);
+        }
+    }
+
+    function updateCirculatingPoints() {
+        const currentTotalPoints = updateCurrentPoints();
+        document.getElementById('circulationPoints').textContent = `Current Circulation Points: ${currentTotalPoints.toLocaleString()}`;
+    }
+
+    createSnowflakes(50);
+    updateCirculatingPoints(); // Update circulating points on load
+    setInterval(updateCirculatingPoints, 60000); // Update circulating points every minute
+
+    // Initialize with zero points
+    document.getElementById('userPoints').value = '';
+    document.getElementById('userPointsDisplay').textContent = 'Your Points: 0';
+    calculateValues();
+</script>
+</body>
+</html>
