@@ -175,70 +175,33 @@
 <body>
     <div class="banner">Built for intern to speculate</div>
     <div class="wave"></div>
-    <div class="content-group">
-        <h1>Polynomial Points Checker</h1>
-        <input type="number" id="userPoints" placeholder="Enter your points" value="10000">
-        <button onclick="calculateValues()" class="check-value">Check Value</button>
-        <p>% of token for trading:</p>
-        <div class="supply-control">
-            <button onclick="changeSupplyPercentage(-1)">-</button>
-            <span id="supplyPercentage">2.5%</span>
-            <button onclick="changeSupplyPercentage(1)">+</button>
-        </div>
-        <div class="results" id="results">
-            <p id="circulationPoints">Current Circulation Points: </p>
-            <p id="userPointsDisplay">Your Points: </p>
-            <div class="table-container">
-                <table id="valuationTable">
-                    <thead>
-                        <tr>
-                            <th>Valuation</th>
-                            <th>Your Value</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Valuation rows will be inserted here -->
-                    </tbody>
-                </table>
-            </div>
+    <h1>Polynomial Points Checker</h1>
+    <input type="number" id="userPoints" placeholder="Enter your points" value="10000">
+    <button onclick="calculateValues()">Check Value</button>
+    <p>% of token for trading:</p>
+    <div class="supply-control">
+        <button onclick="changeSupplyPercentage(-1)">-</button>
+        <span id="supplyPercentage">2.5%</span>
+        <button onclick="changeSupplyPercentage(1)">+</button>
+    </div>
+    <div class="results" id="results">
+        <p id="circulationPoints">Current Circulation Points: </p>
+        <p id="userPointsDisplay">Your Points: </p>
+        <div class="table-container">
+            <table id="valuationTable">
+                <thead>
+                    <tr>
+                        <th>Valuation</th>
+                        <th>Your Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Valuation rows will be inserted here -->
+                </tbody>
+            </table>
         </div>
     </div>
     <style>
-        .content-group {
-            max-width: 600px;
-            margin: 20px auto;
-            background-color: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-            color: #fff;
-            transition: all 0.3s ease;
-        }
-        .content-group:hover {
-            background-color: rgba(0, 0, 0, 0.9);
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-        }
-        .content-group h1 {
-            margin-bottom: 0.75rem;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-        .content-group input, .content-group button {
-            margin-bottom: 10px;
-        }
-        .check-value {
-            background-color: #00ff00;
-            color: #000;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .check-value:hover {
-            background-color: #00cc00;
-        }
-    </style>
         .trading-group {
             position: fixed;
             right: 20px;
@@ -303,7 +266,11 @@
     const startTime = new Date().setUTCHours(14, 0, 0, 0); // Today at 2 PM UTC
 
     function updateCurrentPoints() {
-        return initialPoints; // Always return 10 million
+        const now = new Date();
+        if (now >= new Date(startTime)) {
+            return initialPoints + dailyIncrement; // Return 11 million after 2 PM UTC
+        }
+        return initialPoints; // Return 10 million before 2 PM UTC
     }
 
     function calculateValues() {
@@ -365,4 +332,5 @@
     calculateValues();
 </script>
 </body>
+</html>
 </html>
