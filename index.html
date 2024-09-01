@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFT Drop - Optimism Chain</title>
+    <title>NFT Drop - Multi-Chain</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -41,7 +41,7 @@
             margin-top: 10px;
             font-style: italic;
         }
-        input[type="text"] {
+        input[type="text"], input[type="number"], select {
             padding: 5px;
             margin: 10px 0;
             width: 300px;
@@ -50,7 +50,13 @@
 </head>
 <body>
     <div class="container">
-        <h1>NFT Drop - Optimism Chain</h1>
+        <h1>NFT Drop - Multi-Chain</h1>
+        <select id="network-select">
+            <option value="ethereum">Ethereum</option>
+            <option value="optimism">Optimism</option>
+            <option value="base">Base</option>
+            <option value="arbitrum">Arbitrum</option>
+        </select>
         <button id="connect-wallet" class="button">Connect Wallet</button>
         <div>
             <input type="text" id="contract-address-input" placeholder="Enter NFT Contract Address">
@@ -61,6 +67,7 @@
         <label for="csv-file" class="button">Choose CSV File</label>
         <div id="file-name"></div>
         <input type="text" id="single-address-input" placeholder="Enter single address">
+        <input type="number" id="nft-amount" placeholder="Number of NFTs to send" min="1" value="1">
         <button id="upload-button" class="button" disabled>Drop NFTs</button>
     </div>
 
@@ -74,6 +81,8 @@
         const contractAddressInput = document.getElementById('contract-address-input');
         const contractAddressDisplay = document.getElementById('contract-address');
         const singleAddressInput = document.getElementById('single-address-input');
+        const nftAmountInput = document.getElementById('nft-amount');
+        const networkSelect = document.getElementById('network-select');
 
         let walletAddress = null;
         let nftContractAddress = null;
